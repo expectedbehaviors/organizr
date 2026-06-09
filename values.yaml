@@ -106,8 +106,8 @@ organizr:
     config:
       enabled: true
       type: persistentVolumeClaim
-      accessMode: ReadWriteOnce
-      size: 1Gi
+      # Omit size/accessMode here so private existingClaim overrides pass app-template schema validation (Helm deep-merge).
+      # New installs: set accessMode + size in deployment values, or use existingClaim.
       globalMounts:
         - path: /config
           readOnly: false
