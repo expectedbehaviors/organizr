@@ -107,6 +107,7 @@ organizr:
       enabled: true
       type: persistentVolumeClaim
       accessMode: ReadWriteOnce
+      storageClass: ""
       size: 1Gi
       globalMounts:
         - path: /config
