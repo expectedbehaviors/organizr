@@ -1,0 +1,154 @@
+# Baseline Organizr values. Override ingress hosts, persistence, and controller API credentials.
+
+organizr:
+  global:
+    fullnameOverride: organizr
+  defaultPodOptions:
+    securityContext:
+      fsGroup: 1000
+      runAsGroup: 1000
+      runAsUser: 1000
+      fsGroupChangePolicy: OnRootMismatch
+  controllers:
+    main:
+      enabled: true
+      type: deployment
+      replicas: 1
+      strategy: Recreate
+      containers:
+        main:
+          image:
+            repository: organizr/organizr
+            tag: latest
+            pullPolicy: IfNotPresent
+          env:
+            DOCKER_MODS: ghcr.io/themepark-dev/theme.park:organizr
+            TP_HOTIO: "false"
+            TP_SCHEME: HTTPS
+            TP_THEME: aquamarine
+            TZ: UTC
+            UMASK: "2"
+            FPM: "true"
+          probes:
+            startup:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /
+                  port: 80
+                initialDelaySeconds: 0
+                periodSeconds: 5
+                timeoutSeconds: 3
+                failureThreshold: 30
+            liveness:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /
+                  port: 80
+                initialDelaySeconds: 15
+                periodSeconds: 20
+                timeoutSeconds: 5
+                failureThreshold: 3
+            readiness:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /
+                  port: 80
+                initialDelaySeconds: 5
+                periodSeconds: 10
+                timeoutSeconds: 3
+                failureThreshold: 3
+          resources:
+            requests:
+              cpu: 75m
+              memory: 200Mi
+            limits:
+              cpu: "500m"
+              memory: 512Mi
+  service:
+    main:
+      enabled: true
+      controller: main
+      primary: true
+      ports:
+        http:
+          enabled: true
+          primary: true
+          port: 80
+  ingress:
+    main:
+      enabled: true
+      className: nginx
+      annotations:
+        external-dns.alpha.kubernetes.io/target: example.com
+        nginx.ingress.kubernetes.io/enable-global-auth: "false"
+      hosts:
+        - host: organizr.example.com
+          paths:
+            - path: /
+              pathType: Prefix
+              service:
+                identifier: main
+                port: http
+        - host: home.example.com
+          paths:
+            - path: /
+              pathType: Prefix
+              service:
+                identifier: main
+                port: http
+  persistence:
+    config:
+      enabled: true
+      type: persistentVolumeClaim
+      accessMode: ReadWriteOnce
+      size: 1Gi
+      globalMounts:
+        - path: /config
+          readOnly: false
+
+organizr-tab-controller:
+  fullnameOverride: organizr-tab-controller
+  rbac:
+    create: true
+  hpa:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 4
+  organizr-tab-controller:
+    defaultPodOptions:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: organizr-tab-controller
+                topologyKey: kubernetes.io/hostname
+    controllers:
+      main:
+        enabled: true
+        type: deployment
+        replicas: 2
+        serviceAccount:
+          name: organizr-tab-controller
+        containers:
+          main:
+            env:
+              ORGANIZR_API_URL: "http://organizr.organizr.svc.cluster.local"
+              ORGANIZR_SYNC_POLICY: "upsert"
+              ORGANIZR_LOG_LEVEL: INFO
+              ORGANIZR_ENABLE_LEADER_ELECTION: "true"
+              ORGANIZR_LEADER_ELECTION_NAMESPACE: "organizr"
+              ORGANIZR_LEADER_ELECTION_NAME: "organizr-tab-controller-leader"
+              ORGANIZR_API_KEY:
+                valueFrom:
+                  secretKeyRef:
+                    name: organizr-api
+                    key: api_key
