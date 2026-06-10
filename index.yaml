@@ -1,0 +1,33 @@
+apiVersion: v1
+entries:
+  organizr:
+  - apiVersion: v2
+    appVersion: 1.0.2
+    created: "2026-06-10T02:41:22.492934057Z"
+    dependencies:
+    - alias: organizr
+      name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts
+      version: 4.6.2
+    - name: organizr-tab-controller
+      repository: https://expectedbehaviors.github.io/organizr-tab-controller
+      version: 0.0.1
+    description: Organizr HTPC/homelab dashboard — bjw-s app-template with organizr-tab-controller.
+    digest: 33f35e6e8e2c24cd7c649d0f8d868e5a23156fe450cb1aecde57b58765b4f03e
+    home: https://organizr.app
+    keywords:
+    - organizr
+    - htpc
+    - dashboard
+    - bjw-s
+    - app-template
+    kubeVersion: '>=1.28.0-0'
+    name: organizr
+    sources:
+    - https://github.com/Organizr/Organizr
+    - https://github.com/bjw-s/helm-charts
+    type: application
+    urls:
+    - https://expectedbehaviors.github.io/organizr/organizr-1.0.2.tgz
+    version: 1.0.2
+generated: "2026-06-10T02:41:22.480026263Z"
